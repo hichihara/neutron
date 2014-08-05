@@ -111,6 +111,15 @@ class L3PluginApi(n_rpc.RpcProxy):
                                        host=self.host),
                          topic=self.topic)
 
+    def update_router_status(self, context, router_id, status):
+        """Call the plugin update router's operational status."""
+        return self.call(context,
+                         self.make_msg('update_router_status',
+                                       router_id=router_id,
+                                       status=status),
+                         topic=self.topic,
+                         version='1.1')
+
     def update_floatingip_statuses(self, context, router_id, fip_statuses):
         """Call the plugin update floating IPs's operational status."""
         return self.call(context,
@@ -1551,9 +1560,9 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             cur_router_ids.add(r['id'])
             if r['id'] not in self.router_info:
                 self._router_added(r['id'], r)
-                # Update floating IP status on the neutron server
+                # Update router status on the neutron server
                 self.plugin_rpc.update_router_status(
-                    self.context, r['id'], status='ACTIVE')
+                    self.context, r['id'], status=l3_constants.L3_STATUS_ACTIVE)
 
             ri = self.router_info[r['id']]
             ri.router = r
@@ -1566,6 +1575,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def _process_router_update(self):
         for rp, update in self._queue.each_update_to_next_router():
             LOG.debug("Starting router update for %s", update.id)
+            # Update router status on the neutron server
+            self.plugin_rpc.update_router_status(
+                self.context, update.id,
+                status=l3_constants.L3_STATUS_PENDING_UPDATE)            
             router = update.router
             if update.action != DELETE_ROUTER and not router:
                 try:
@@ -1580,13 +1593,22 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
                 if routers:
                     router = routers[0]
-
+            
             if not router:
                 self._router_removed(update.id)
                 continue
-
-            self._process_routers([router])
+            try:
+                self._process_routers([router])
+            except Exception, msg:
+                # Update router status on the neutron server
+                self.plugin_rpc.update_router_status(
+                    self.context, update.id,
+                    status=l3_constants.L3_STATUS_ERROR)
+                raise Exception(msg)
             LOG.debug("Finished a router update for %s", update.id)
+            # Update router status on the neutron server
+            self.plugin_rpc.update_router_status(
+                self.context, update.id, status='ACTIVE')
             rp.fetched_and_processed(update.timestamp)
 
     def _process_routers_loop(self):
