@@ -65,6 +65,23 @@ class L3RpcCallbackMixin(object):
                   jsonutils.dumps(routers, indent=5))
         return routers
 
+    def update_router_status(self, context, router_id, status):
+        """Update operational status for a router"""
+        l3_plugin = manager.NeutronManager.get_service_plugins()[
+            plugin_constants.L3_ROUTER_NAT]
+        with context.session.begin(subtransactions=True):
+            LOG.debug(_("New status for router %(router_id)s: "
+                        "%(status)s"), {'router_id': router_id,
+                                        'status': status})
+            try:
+                l3_plugin.update_router_status(context,
+                                               router_id,
+                                               status)
+            except l3.RouterNotFound:
+                LOG.debug(_("Router: %s no longer present."),
+                          router_id)
+        
+
     def _ensure_host_set_on_ports(self, context, plugin, host, routers):
         for router in routers:
             LOG.debug(_("Checking router: %(id)s for host: %(host)s"),

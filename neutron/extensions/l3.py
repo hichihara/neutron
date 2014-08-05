@@ -92,7 +92,7 @@ RESOURCE_ATTRIBUTE_MAP = {
                            'default': True,
                            'convert_to': attr.convert_to_boolean,
                            'is_visible': True},
-        'status': {'allow_post': False, 'allow_put': False,
+        'status': {'allow_post': True, 'allow_put': False,
                    'is_visible': True},
         'tenant_id': {'allow_post': True, 'allow_put': False,
                       'required_by_policy': True,

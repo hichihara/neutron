@@ -134,7 +134,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                tenant_id=tenant_id,
                                name=router['name'],
                                admin_state_up=router['admin_state_up'],
-                               status="ACTIVE")
+                               status="DOWN")
             context.session.add(router_db)
             return router_db
 
@@ -158,6 +158,12 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
             if data:
                 router_db.update(data)
             return router_db
+
+    def update_router_status(self, context, router_id, status):
+        """Update operational status for router in neutron DB."""
+        router_query = self._model_query(context, Router).filter(
+            Router.id == router_id)
+        router_query.update({'status': status}, synchronize_session=False)
 
     def update_router(self, context, id, router):
         r = router['router']

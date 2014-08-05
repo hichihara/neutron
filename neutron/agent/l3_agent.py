@@ -1551,6 +1551,10 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             cur_router_ids.add(r['id'])
             if r['id'] not in self.router_info:
                 self._router_added(r['id'], r)
+                # Update floating IP status on the neutron server
+                self.plugin_rpc.update_router_status(
+                    self.context, r['id'], status='ACTIVE')
+
             ri = self.router_info[r['id']]
             ri.router = r
             pool.spawn_n(self.process_router, ri)
