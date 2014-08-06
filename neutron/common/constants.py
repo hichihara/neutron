@@ -38,7 +38,6 @@ DEVICE_OWNER_AGENT_GW = "network:floatingip_agent_gateway"
 DEVICE_OWNER_ROUTER_SNAT = "network:router_centralized_snat"
 
 L3_STATUS_ACTIVE = 'ACTIVE'
-L3_STATUS_DOWN = 'DOWN'
 L3_STATUS_PENDING_UPDATE = 'PENDING_UPDATE'
 L3_STATUS_ERROR = 'ERROR'
 
