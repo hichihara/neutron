@@ -1576,7 +1576,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
                 # Update router status on the neutron server
                 self.plugin_rpc.update_router_status(
                     self.context, update.id,
-                    status=l3_constants.L3_STATUS_PENDING_UPDATE)            
+                    status=l3_constants.L3_STATUS_PENDING_UPDATE)
             router = update.router
             if update.action != DELETE_ROUTER and not router:
                 try:
@@ -1591,7 +1591,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
 
                 if routers:
                     router = routers[0]
-            
+
             if not router:
                 self._router_removed(update.id)
                 continue
