@@ -1572,10 +1572,11 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
     def _process_router_update(self):
         for rp, update in self._queue.each_update_to_next_router():
             LOG.debug("Starting router update for %s", update.id)
-            # Update router status on the neutron server
-            self.plugin_rpc.update_router_status(
-                self.context, update.id,
-                status=l3_constants.L3_STATUS_PENDING_UPDATE)            
+            if self.conf.agent_mode == 'legacy':
+                # Update router status on the neutron server
+                self.plugin_rpc.update_router_status(
+                    self.context, update.id,
+                    status=l3_constants.L3_STATUS_PENDING_UPDATE)            
             router = update.router
             if update.action != DELETE_ROUTER and not router:
                 try:
@@ -1597,15 +1598,18 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             try:
                 self._process_routers([router])
             except Exception, msg:
+                if self.conf.agent_mode == 'legacy':
+                    # Update router status on the neutron server
+                    self.plugin_rpc.update_router_status(
+                        self.context, update.id,
+                        status=l3_constants.L3_STATUS_ERROR)
+                raise Exception(msg)
+            LOG.debug("Finished a router update for %s", update.id)
+            if self.conf.agent_mode == 'legacy':
                 # Update router status on the neutron server
                 self.plugin_rpc.update_router_status(
                     self.context, update.id,
-                    status=l3_constants.L3_STATUS_ERROR)
-                raise Exception(msg)
-            LOG.debug("Finished a router update for %s", update.id)
-            # Update router status on the neutron server
-            self.plugin_rpc.update_router_status(
-                self.context, update.id, status=l3_constants.L3_STATUS_ACTIVE)
+                    status=l3_constants.L3_STATUS_ACTIVE)
             rp.fetched_and_processed(update.timestamp)
 
     def _process_routers_loop(self):
