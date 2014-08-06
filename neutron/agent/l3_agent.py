@@ -1605,7 +1605,7 @@ class L3NATAgent(firewall_l3_agent.FWaaSL3AgentRpcCallback, manager.Manager):
             LOG.debug("Finished a router update for %s", update.id)
             # Update router status on the neutron server
             self.plugin_rpc.update_router_status(
-                self.context, update.id, status='ACTIVE')
+                self.context, update.id, status=l3_constants.L3_STATUS_ACTIVE)
             rp.fetched_and_processed(update.timestamp)
 
     def _process_routers_loop(self):
