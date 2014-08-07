@@ -734,17 +734,27 @@ class TestBasicRouterOperations(base.BaseTestCase):
             router = prepare_router_data()
             agent._queue = mock.Mock()
             update = mock.Mock()
-            update.id.return_value = router['id']
-            update.router.return_value = router
-            agent._queue.each_update_to_next_router.return_value = (mock.Mock(),
-                                                                    update)
-            agent.conf = mock.Mock()
-            #agent.conf.agent_mode.return_value = ''
+            #update.id.return_value = router['id']
+            update.id = router['id']
+            #update.router.return_value = router
+            update.router = router
+            agent._queue.each_update_to_next_router.return_value = [(mock.Mock(), update)]
+            #agent.conf = mock.Mock()
+            #agent.conf.agent_mode.return_value = 'legacy'
             agent._process_routers = mock.Mock()
             agent._process_router_update()
+            self.assertEqual(agent._process_routers.call_count, 1)
             # Assess the call for putting the router up was performed
-            mock_update_router_status.assert_called_once_with(
-                mock.ANY, router['id'], l3_constants.L3_STATUS_ACTIVE)
+            mock_update_router_status.assert_any_call(
+                mock.ANY, router['id'], status=l3_constants.L3_STATUS_PENDING_UPDATE)
+            mock_update_router_status.assert_called_with(
+                mock.ANY, router['id'], status=l3_constants.L3_STATUS_ACTIVE)
+                        
+            #mock_update_router_status.reset_mock()
+            agent._process_routers.side_effect = Exception
+            self.assertRaises(Exception, agent._process_router_update)
+            mock_update_router_status.assert_called_with(
+                mock.ANY, router['id'], status=l3_constants.L3_STATUS_ERROR)
 
     @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
     def _test_process_router_floating_ip_addresses_add(self, ri,
