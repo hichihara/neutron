@@ -726,6 +726,26 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.assertFalse(agent.process_router_floating_ip_addresses.called)
         self.assertFalse(agent.process_router_floating_ip_nat_rules.called)
 
+    def test_process_router_update(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        with mock.patch.object(
+            agent.plugin_rpc,
+            'update_router_status') as mock_update_router_status:
+            router = prepare_router_data()
+            agent._queue = mock.Mock()
+            update = mock.Mock()
+            update.id.return_value = router['id']
+            update.router.return_value = router
+            agent._queue.each_update_to_next_router.return_value = (mock.Mock(),
+                                                                    update)
+            agent.conf = mock.Mock()
+            #agent.conf.agent_mode.return_value = ''
+            agent._process_routers = mock.Mock()
+            agent._process_router_update()
+            # Assess the call for putting the router up was performed
+            mock_update_router_status.assert_called_once_with(
+                mock.ANY, router['id'], l3_constants.L3_STATUS_ACTIVE)
+
     @mock.patch('neutron.agent.linux.ip_lib.IPDevice')
     def _test_process_router_floating_ip_addresses_add(self, ri,
                                                        agent, IPDevice):
