@@ -80,7 +80,6 @@ class L3RpcCallbackMixin(object):
             except l3.RouterNotFound:
                 LOG.debug(_("Router: %s no longer present."),
                           router_id)
-        
 
     def _ensure_host_set_on_ports(self, context, plugin, host, routers):
         for router in routers:

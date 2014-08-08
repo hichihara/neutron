@@ -134,7 +134,7 @@ class L3_NAT_db_mixin(l3.RouterPluginBase):
                                tenant_id=tenant_id,
                                name=router['name'],
                                admin_state_up=router['admin_state_up'],
-                               status='ACTIVE')
+                               status=l3_constants.L3_STATUS_ACTIVE)
             context.session.add(router_db)
             return router_db
 
